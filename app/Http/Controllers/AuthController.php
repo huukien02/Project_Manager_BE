@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AuthRequest\LoginRequest;
 use App\Http\Requests\AuthRequest\RegisterUserRequest;
+use App\Models\User;
 use App\Repositories\User\UserRepositoryInterface;
+use App\Traits\ApiResponseTrait;
+use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
-
+    use ApiResponseTrait;
     protected $userRepository;
 
     public function __construct(UserRepositoryInterface $userRepository)
@@ -22,7 +25,6 @@ class AuthController extends Controller
         $data = $request->validated();
         $data['password'] = bcrypt($request->password);
         $user = $this->userRepository->create($data);
-
         return $this->apiResponse($user, 'Tạo tài khoản thành công', 201);
     }
 
@@ -35,7 +37,7 @@ class AuthController extends Controller
             return $this->apiResponse(null, 'Tên đăng nhập hoặc mật khẩu không đúng', 401);
         }
 
-        return $this->apiResponse($token, 'Đăng nhập thanh cong', 200);
+        return $this->apiResponse($token, 'Đăng nhập thành công', 200);
     }
 
     public function profile()
