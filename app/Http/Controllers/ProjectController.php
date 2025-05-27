@@ -35,9 +35,16 @@ class ProjectController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'owner_id' => 'required|exists:users,id',
+            'member_ids' => 'nullable|array',
+            'member_ids.*' => 'exists:users,id',
         ]);
 
         $project =  $this->projectRepository->createProject($validated);
+
+        if (!empty($validated['member_ids'])) {
+            $project->members()->sync($validated['member_ids']);
+        }
+
         return $this->apiResponse($project, 'Tạo dự án mới thành công', 201);
     }
 

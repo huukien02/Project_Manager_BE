@@ -41,7 +41,7 @@ class ProjectRepository implements ProjectRepositoryInterface
 
     public function findProjectById(int $id): ?Project
     {
-        return Project::with('owner')->find($id);
+        return Project::with('owner', 'members')->find($id);
     }
 
     // Tạo mới một dự án
