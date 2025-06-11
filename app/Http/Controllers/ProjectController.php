@@ -2,22 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ProjectRequest\ProjectFilterRequest;
+use App\Http\Requests\ProjectRequest\StoreProjectRequest;
+use App\Http\Requests\ProjectRequest\UpdateProjectRequest;
 use App\Models\Project;
 use App\Repositories\Projects\ProjectRepositoryInterface;
-use Illuminate\Http\Request;
+use App\Traits\ApiResponseTrait;
+
 
 class ProjectController extends Controller
 {
-
+    use ApiResponseTrait;
     protected $projectRepository;
 
-    // Inject repository vào controller
     public function __construct(ProjectRepositoryInterface $projectRepository)
     {
         $this->projectRepository = $projectRepository;
     }
 
-    public function index(Request $request)
+    public function index(ProjectFilterRequest $request)
     {
         $filters = $request->only(['search', 'status', 'start_date', 'end_date', 'owner']);
 
@@ -26,20 +29,11 @@ class ProjectController extends Controller
         return $this->apiResponse($projects, 'Thành công', 200);
     }
 
-    public function store(Request $request)
+    public function store(StoreProjectRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'required|in:pending,active,completed,on_hold',
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'owner_id' => 'required|exists:users,id',
-            'member_ids' => 'nullable|array',
-            'member_ids.*' => 'exists:users,id',
-        ]);
+        $validated = $request->validated();
 
-        $project =  $this->projectRepository->createProject($validated);
+        $project = $this->projectRepository->createProject($validated);
 
         if (!empty($validated['member_ids'])) {
             $project->members()->sync($validated['member_ids']);
@@ -57,19 +51,17 @@ class ProjectController extends Controller
         return $this->apiResponse($project, 'Lấy thông tin dự án', 200);
     }
 
-    public function update(Request $request, Project $project)
+    public function update(UpdateProjectRequest $request, Project $project)
     {
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'in:pending,active,completed,on_hold',
-            'start_date' => 'sometimes|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'owner_id' => 'sometimes|exists:users,id',
-        ]);
+        $validated = $request->validated();
 
         $project->update($validated);
-        return response()->json($project);
+
+        if (isset($validated['member_ids'])) {
+            $project->members()->sync($validated['member_ids']);
+        }
+
+        return $this->apiResponse($project->load('members', 'owner'), 'Thành công', 200);
     }
 
     public function destroy(Project $project)

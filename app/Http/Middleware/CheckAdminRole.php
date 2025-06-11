@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class CheckAdminRole
 {
@@ -11,17 +12,12 @@ class CheckAdminRole
      * Handle an incoming request.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
+     * @param  \Closure(\Illuminate\Http\Request)
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
     public function handle(Request $request, Closure $next)
     {
-        $user = auth()->user();
-
-        if (!$user || $user->role !== 'admin') {
-            return response()->json(['message' => 'Bạn không có quyền thực hiện hành động này'], 403);
-        }
-
+        Gate::authorize('admin-only');
         return $next($request);
     }
 }
