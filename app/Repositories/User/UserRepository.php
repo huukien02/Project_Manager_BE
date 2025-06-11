@@ -3,6 +3,7 @@
 namespace App\Repositories\User;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class UserRepository implements UserRepositoryInterface
 {
@@ -11,9 +12,19 @@ class UserRepository implements UserRepositoryInterface
         return User::create($data);
     }
 
-    public function getAll()
+    public function getAll(array $filters)
     {
-        return User::all();
+        $query = User::query();
+
+        if (!empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('username', 'like', '%' . $filters['search'] . '%')
+                    ->orWhere('name', 'like', '%' . $filters['search'] . '%')
+                    ->orWhere('email', 'like', '%' . $filters['search'] . '%');
+            });
+        }
+
+        return $query->paginate(5);
     }
 
     public function find($id)

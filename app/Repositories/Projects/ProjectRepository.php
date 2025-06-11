@@ -44,13 +44,11 @@ class ProjectRepository implements ProjectRepositoryInterface
         return Project::with('owner', 'members')->find($id);
     }
 
-    // Tạo mới một dự án
     public function createProject(array $data): Project
     {
         return Project::create($data);
     }
 
-    // Cập nhật thông tin dự án
     public function updateProject(int $id, array $data): Project
     {
         $project = Project::findOrFail($id);
@@ -59,7 +57,6 @@ class ProjectRepository implements ProjectRepositoryInterface
         return $project;
     }
 
-    // Xóa một dự án
     public function deleteProject(int $id): bool
     {
         $project = Project::findOrFail($id);

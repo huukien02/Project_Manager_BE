@@ -4,10 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AuthRequest\LoginRequest;
 use App\Http\Requests\AuthRequest\RegisterUserRequest;
-use App\Models\User;
 use App\Repositories\User\UserRepositoryInterface;
 use App\Traits\ApiResponseTrait;
-use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
@@ -20,15 +18,6 @@ class AuthController extends Controller
         $this->userRepository = $userRepository;
     }
 
-    public function register(RegisterUserRequest $request)
-    {
-        $data = $request->validated();
-        $data['password'] = bcrypt($request->password);
-        $user = $this->userRepository->create($data);
-        return $this->apiResponse($user, 'Tạo tài khoản thành công', 201);
-    }
-
-
     public function login(LoginRequest $request)
     {
         $credentials = $request->validated();
@@ -38,6 +27,12 @@ class AuthController extends Controller
         }
 
         return $this->apiResponse($token, 'Đăng nhập thành công', 200);
+    }
+
+    public function refresh()
+    {
+        $newToken = JWTAuth::parseToken()->refresh();
+        return $this->apiResponse($newToken, 'Làm mới token thành công', 200);
     }
 
     public function profile()
@@ -52,33 +47,5 @@ class AuthController extends Controller
     {
         auth()->logout();
         return $this->apiResponse(null, 'Đăng xuất thành công', 200);
-    }
-
-    public function destroy($id)
-    {
-        $user = $this->userRepository->find($id);
-
-        if (!$user) {
-            return  $this->apiResponse(null, 'Người dùng không tồn tại', 404);
-        }
-
-        if ($user->role === 'admin') {
-            return  $this->apiResponse(null, 'Bạn không thể xóa Admin khác', 403);
-        }
-
-        $this->userRepository->delete($id);
-        return $this->apiResponse(null, 'Xóa người dùng thành công', 200);
-    }
-
-    public function index()
-    {
-        $users = $this->userRepository->getAll();
-        return $this->apiResponse($users, 'Lấy danh sách người dùng', 200);
-    }
-
-    public function show($id)
-    {
-        $user = $this->userRepository->find($id);
-        return $this->apiResponse($user, 'Lấy thông tin người dùng thành công', 200);
     }
 }
